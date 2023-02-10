@@ -396,6 +396,7 @@ bool RetargetCreatureCmd::InternalRunCommand(map<string, docopt::value> parsedAr
 	}
 
 	//Check paired
+	/*
 	for (int i = 0; i < hk_ch_root->m_stringData->m_animationNames.getSize(); i++)
 	{
 		string name = hk_ch_root->m_stringData->m_animationNames[i];
@@ -522,6 +523,8 @@ bool RetargetCreatureCmd::InternalRunCommand(map<string, docopt::value> parsedAr
 		retarget_map[crc_str] = new_crc_str;
 
 	}
+	*/
+
 	fs::create_directories(fs::path(fs::path(output) / new_char_name).parent_path());
 	wrapper.write(root, output / new_char_name);
 	fs::path old_behavior_dir = source_havok_project_folder / fs::path(old_behavior_name).parent_path();

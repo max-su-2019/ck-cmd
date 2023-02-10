@@ -4,7 +4,7 @@ project( "ck-cmd" )
 include(ExternalProject)
 
 option(PROJECT_STATIC_RUNTIME "Build with static runtime libs (/MT)" ON)
-option(PROJECT_GUI "Build GUI" ON)
+option(PROJECT_GUI "Build GUI" OFF)
 UNSET(HAVE_SPEEDTREE CACHE)
 option(HAVE_SPEEDTREE "Build with speedtree support" OFF)
 
@@ -34,7 +34,7 @@ set (TEST_SRC "${CMAKE_SOURCE_DIR}/test/main.cpp")
 
 ExternalProject_Add(zlib
                     PREFIX "external"
-                    URL "https://zlib.net/zlib-1.2.12.tar.gz"
+                    URL "https://zlib.net/zlib-1.2.13.tar.gz"
                     INSTALL_COMMAND "")
 ExternalProject_Get_Property(zlib SOURCE_DIR BINARY_DIR)
 set (ZLIB_INCLUDE_DIRS ${SOURCE_DIR} ${BINARY_DIR})
@@ -545,6 +545,7 @@ set (PROJECT_COMMANDS
 					 "${CMAKE_SOURCE_DIR}/include/commands/Geometry.h"
 					 "${CMAKE_SOURCE_DIR}/include/commands/ListCreatures.h"
 					 "${CMAKE_SOURCE_DIR}/include/commands/RetargetCreature.h"
+					 "${CMAKE_SOURCE_DIR}/include/commands/AppendCache.h"
 					 "${CMAKE_SOURCE_DIR}/include/commands/DecodeCache.h"
 					 "${CMAKE_SOURCE_DIR}/include/commands/desaturateVC.h"
 					 "${CMAKE_SOURCE_DIR}/include/commands/Skeleton.h"

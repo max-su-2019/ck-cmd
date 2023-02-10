@@ -31,7 +31,7 @@ class HkCRC {
 	static int reflectByte(int c);
 	static void reflect(int* crc, int bitnum, int startLSB);
 public:
-	
+
 	static std::string compute(std::string input);
 };
 
@@ -41,7 +41,7 @@ struct CacheEntry
 	AnimData::ProjectBlock& block;
 	AnimData::ProjectDataBlock& movements;
 
-	CacheEntry() : block(AnimData::ProjectBlock()) , movements(AnimData::ProjectDataBlock()){}
+	CacheEntry() : block(AnimData::ProjectBlock()), movements(AnimData::ProjectDataBlock()) {}
 	CacheEntry(const string& name, AnimData::ProjectBlock& block, AnimData::ProjectDataBlock& movements) : name(name), block(block), movements(movements) {}
 
 	bool hasCache() { return block.getHasAnimationCache(); }
@@ -159,12 +159,21 @@ struct CreatureCacheEntry : public CacheEntry
 		auto projectFiles = sets.getProjectFiles().getStrings();
 		auto blocks = sets.getProjectAttackBlocks();
 		size_t set_index = distance(projectFiles.begin(), find(projectFiles.begin(), projectFiles.end(), project_set_key));
-		return { 
+		return {
 			blocks[set_index].getSwapEventsList().getStrings(),
-			blocks[set_index].getHandVariableData() 
+			blocks[set_index].getHandVariableData()
 		};
 	}
 
+};
+
+struct CreatureStaticCacheEntry : public StaticCacheEntry
+{
+	AnimData::ProjectAttackListBlock sets;
+
+	CreatureStaticCacheEntry() : sets(AnimData::ProjectAttackListBlock()) {}
+	CreatureStaticCacheEntry(const string& name, AnimData::ProjectBlock& block, AnimData::ProjectDataBlock& movements, AnimData::ProjectAttackListBlock& sets) :
+		StaticCacheEntry(name, block, movements), sets(sets) {}
 };
 
 struct AnimationCache {
@@ -235,7 +244,7 @@ struct AnimationCache {
 		if (NULL == out) {
 
 			auto index = animationData.putProject(name + ".txt", AnimData::ProjectBlock(), AnimData::ProjectDataBlock());
-			
+
 			if (creature)
 			{
 				auto creature_index = animationSetData.putProjectAttackBlock(name + "Data\\" + name + ".txt", AnimData::ProjectAttackListBlock());
@@ -276,10 +285,10 @@ struct AnimationCache {
 	CreatureCacheEntry* cloneCreature(const std::string& source_project, const std::string& destination_project);
 
 	void save(const fs::path& animationDataPath, const  fs::path& animationSetDataPath);
-	void save_creature(const string& project, 
-		CacheEntry* project_entry, 
-		const fs::path& animationDataPath, 
-		const  fs::path& animationSetDataPath, 
+	void save_creature(const string& project,
+		CacheEntry* project_entry,
+		const fs::path& animationDataPath,
+		const  fs::path& animationSetDataPath,
 		const fs::path& root_folder = ".",
 		bool saveMergedSets = true);
 
@@ -289,6 +298,12 @@ struct AnimationCache {
 	static void get_entries(
 		StaticCacheEntry& entry,
 		const string& cacheFile
+	);
+
+	static void get_entries(
+		CreatureStaticCacheEntry& entry,
+		const string& cacheFile,
+		const string& setDatafile
 	);
 
 	static void create_entry(

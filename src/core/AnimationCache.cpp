@@ -1,4 +1,6 @@
 #include <core/AnimationCache.h>
+#include <ranges>
+#include "bs/StringListBlock.h"
 
 int HkCRC::reflectByte(int c)
 {
@@ -43,7 +45,7 @@ std::string HkCRC::compute(std::string input) {
 	int polynom[] = { 0,0,0,0,4,193,29,183 };
 	int init[] = { 0,0,0,0,0,0,0,0 };
 	int crc[] = { 0,0,0,0,0,0,0,0,0 };
-	int xor[] = { 0,0,0,0,0,0,0,0 };
+	int xor [] = { 0,0,0,0,0,0,0,0 };
 	order = 32;
 
 	// generate bit mask
@@ -115,7 +117,7 @@ std::string HkCRC::compute(std::string input) {
 	return output;
 }
 
-CacheEntry* AnimationCache::find(const string & name) {
+CacheEntry* AnimationCache::find(const string& name) {
 	if (projects_index.find(name) != projects_index.end())
 		return projects_index[name];
 	return NULL;
@@ -198,10 +200,10 @@ void AnimationCache::save(const fs::path& animationDataPath, const  fs::path& an
 }
 
 void AnimationCache::save_creature(
-	const string& project, 
-	CacheEntry* project_entry, 
-	const fs::path& animationDataPath, 
-	const  fs::path& animationSetDataPath, 
+	const string& project,
+	CacheEntry* project_entry,
+	const fs::path& animationDataPath,
+	const  fs::path& animationSetDataPath,
 	const fs::path& root_folder,
 	bool saveMergedSets
 ) {
@@ -424,12 +426,69 @@ void AnimationCache::get_entries(
 		ifstream t(movement_path.string());
 		string movement_content;
 		t.seekg(0, std::ios::end);
-		block_content.reserve(static_cast<size_t>(t.tellg()));
+		movement_content.reserve(static_cast<size_t>(t.tellg()));
 		t.seekg(0, std::ios::beg);
 		movement_content.assign((std::istreambuf_iterator<char>(t)),
 			std::istreambuf_iterator<char>());
 		scannerpp::Scanner p(movement_content);
 		entry.movements.parseBlock(p);
+	}
+}
+
+inline vector<string> GetAllFiles(std::string_view a_path) noexcept
+{
+	vector<string> files;
+
+	if (!std::filesystem::exists(a_path))
+		return files;
+
+	ifstream infile(a_path.data());
+	string line;
+	while (getline(infile, line)) {
+		files.push_back(line);
+	}
+
+	infile.close();
+
+	return files;
+}
+
+inline string GetContentList(const vector<string>& a_List) noexcept
+{
+	string result = "";
+	for (auto file : a_List) {
+		result += file + "\n";
+	}
+
+	return result;
+}
+
+void AnimationCache::get_entries(
+	CreatureStaticCacheEntry& entry, 
+	const string& cacheFile,
+	const string& setDataFile
+)
+{
+	get_entries(entry, cacheFile);
+	if (entry.block.getHasAnimationCache())
+	{
+		auto animSetList = GetAllFiles(setDataFile);
+		string attackSet_contentList = std::to_string(animSetList.size()) + "\n" + GetContentList(animSetList);
+		for (auto animSet : animSetList) {
+			string attackSet_content;
+			ifstream t(fs::path(setDataFile).parent_path() / animSet);
+			t.seekg(0, std::ios::end);
+			attackSet_content.reserve(static_cast<size_t>(t.tellg()));
+			t.seekg(0, std::ios::beg);
+			attackSet_content.assign((std::istreambuf_iterator<char>(t)),
+				std::istreambuf_iterator<char>());
+
+			attackSet_contentList += attackSet_content;
+		}
+
+		scannerpp::Scanner p(attackSet_contentList);
+		
+		entry.sets.parseBlock(p);
 	}
 }
 
@@ -473,25 +532,25 @@ void AnimationCache::create_creature_entry(
 		[](const string& lhs, const string& rhs) -> bool
 		{
 			string llhs = lhs.substr(0, lhs.size() - 4);
-			string lrhs = rhs.substr(0, rhs.size() - 4);
+	string lrhs = rhs.substr(0, rhs.size() - 4);
 
-			std::transform(llhs.begin(), llhs.end(), llhs.begin(), ::tolower);
-			std::transform(lrhs.begin(), lrhs.end(), lrhs.begin(), ::tolower);
+	std::transform(llhs.begin(), llhs.end(), llhs.begin(), ::tolower);
+	std::transform(lrhs.begin(), lrhs.end(), lrhs.begin(), ::tolower);
 
-			std::string::size_type pos = 0;
-			while ((pos = llhs.find("_", pos)) != std::string::npos)
-			{
-				llhs.replace(pos, 1, " ");
-				pos = pos + 1;
-			}
-			pos = 0;
-			while ((pos = lrhs.find("_", pos)) != std::string::npos)
-			{
-				lrhs.replace(pos, 1, " ");
-				pos = pos + 1;
-			}
+	std::string::size_type pos = 0;
+	while ((pos = llhs.find("_", pos)) != std::string::npos)
+	{
+		llhs.replace(pos, 1, " ");
+		pos = pos + 1;
+	}
+	pos = 0;
+	while ((pos = lrhs.find("_", pos)) != std::string::npos)
+	{
+		lrhs.replace(pos, 1, " ");
+		pos = pos + 1;
+	}
 
-			return lrhs > llhs;
+	return lrhs > llhs;
 		});
 
 	for (const auto& project : project_files)
