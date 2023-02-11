@@ -1,6 +1,4 @@
 #include <core/AnimationCache.h>
-#include <ranges>
-#include "bs/StringListBlock.h"
 
 int HkCRC::reflectByte(int c)
 {
@@ -435,34 +433,6 @@ void AnimationCache::get_entries(
 	}
 }
 
-inline vector<string> GetAllFiles(std::string_view a_path) noexcept
-{
-	vector<string> files;
-
-	if (!std::filesystem::exists(a_path))
-		return files;
-
-	ifstream infile(a_path.data());
-	string line;
-	while (getline(infile, line)) {
-		files.push_back(line);
-	}
-
-	infile.close();
-
-	return files;
-}
-
-inline string GetContentList(const vector<string>& a_List) noexcept
-{
-	string result = "";
-	for (auto file : a_List) {
-		result += file + "\n";
-	}
-
-	return result;
-}
-
 void AnimationCache::get_entries(
 	CreatureStaticCacheEntry& entry, 
 	const string& cacheFile,
@@ -470,10 +440,37 @@ void AnimationCache::get_entries(
 )
 {
 	get_entries(entry, cacheFile);
+
+	auto GerSetFiles = [](std::string_view a_path)-> vector<string> {
+		vector<string> files;
+
+		if (!std::filesystem::exists(a_path))
+			return files;
+
+		ifstream infile(a_path.data());
+		string line;
+		while (getline(infile, line)) {
+			if (std::filesystem::exists(fs::path(a_path).parent_path() / line))
+				files.push_back(line);
+		}
+		infile.close();
+
+		return files;
+	};
+
+	auto GetFilesList = [](const vector<string>& a_List)-> const string {
+		string result = "";
+		for (auto file : a_List) {
+			result += file + "\n";
+		}
+
+		return result;
+	};
+
 	if (entry.block.getHasAnimationCache())
 	{
-		auto animSetList = GetAllFiles(setDataFile);
-		string attackSet_contentList = std::to_string(animSetList.size()) + "\n" + GetContentList(animSetList);
+		auto animSetList = GerSetFiles(setDataFile);
+		string attackSet_contentList = std::to_string(animSetList.size()) + "\n" + GetFilesList(animSetList);
 		for (auto animSet : animSetList) {
 			string attackSet_content;
 			ifstream t(fs::path(setDataFile).parent_path() / animSet);
